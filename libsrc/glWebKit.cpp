@@ -133,13 +133,24 @@ bool init()
     params.mJavaScriptStackSize = 1024 * 1024;
     params.mVerifySSLCert = false;
 
+    // attention: you need to load all the fonts that are set, otherwise the renderer will crash
+    wcscpy((wchar_t*)params.mFontFamilyStandard, L"Roboto");
+    wcscpy((wchar_t*)params.mFontFamilySerif, L"Roboto");
+    wcscpy((wchar_t*)params.mFontFamilySansSerif, L"Roboto");
+    wcscpy((wchar_t*)params.mFontFamilyMonospace, L"Roboto");
+    wcscpy((wchar_t*)params.mFontFamilyCursive, L"Roboto");
+    wcscpy((wchar_t*)params.mFontFamilyFantasy, L"Roboto");
+    wcscpy((wchar_t*)params.mSystemFont, L"Roboto");
+    params.mSystemFontBold = false;
+
     wk->SetParameters(params);
     
     //initialize the text system (if it hasn't been already)
     EA::WebKit::ITextSystem* ts = wk->GetTextSystem();
     ts->Init();
     
-    init_system_fonts(wk);
+    //init_system_fonts(wk);
+    add_ttf_font(wk, "Roboto-Regular.ttf");
     
     
     v = wk->CreateView();
@@ -158,7 +169,7 @@ bool init()
     
     //v->SetURI("test.html");
     //const char test[] = "<div style='border:10px dashed red;'> </div>";
-    const char test[] = "<div style='border:10px dashed red;'> </div><h1>My First Heading</h1><p>My first paragraph.</p>";
+    const char test[] = "<div style = 'border:10px dashed red;'> </div><h1>My First Heading</h1><p>My first paragraph.</p>";
     
     v->SetHtml(test, sizeof(test));
 
