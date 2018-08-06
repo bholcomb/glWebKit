@@ -9,7 +9,7 @@ solution ("WebkitTest")
     architecture "x86_64"
 
   filter {"platforms:x64", "kind:ConsoleApp or WindowedApp or SharedLib"}
-    targetdir ('Bin64')
+    targetdir ('../bin64')
 
 -------------------------------------------------------------------------------
 -- Projects

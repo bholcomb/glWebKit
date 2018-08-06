@@ -93,10 +93,10 @@ void initGL()
    myVerts.resize(4);
    myIndexes.resize(6);
    
-   myVerts[0].position = Vector3(-1, -1, 0); myVerts[0].uv = Vector2(0, 0);
-   myVerts[1].position = Vector3(1, -1, 0); myVerts[1].uv = Vector2(1, 0);
-   myVerts[2].position = Vector3(1, 1, 0); myVerts[2].uv = Vector2(1, 1);
-   myVerts[3].position = Vector3(-1, 1, 0); myVerts[3].uv = Vector2(0, 1);
+   myVerts[0].position = Vector3(0, 0, 0);                        myVerts[0].uv = Vector2(0, 0);
+   myVerts[1].position = Vector3(SCREEN_WIDTH, 0, 0);             myVerts[1].uv = Vector2(1, 0);
+   myVerts[2].position = Vector3(SCREEN_WIDTH, SCREEN_HEIGHT, 0); myVerts[2].uv = Vector2(1, 1);
+   myVerts[3].position = Vector3(0, SCREEN_HEIGHT, 0);            myVerts[3].uv = Vector2(0, 1);
 
    myIndexes[0] = 0; myIndexes[1] = 1; myIndexes[2] = 2;
    myIndexes[3] = 0; myIndexes[4] = 2; myIndexes[5] = 3;
@@ -216,8 +216,8 @@ void drawInterface()
    updateTexture(myTexture);
 
    //glm::mat4 proj = glm::perspective(60.0f, (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
-   glm::mat4 proj = glm::ortho(-2.0f, (float)2.0f, -2.0f, (float)2.0, 0.1f, 100.0f);
-   glm::mat4 view = glm::lookAt(glm::vec3(0.f, 0.f, -1.0f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f));
+   glm::mat4 proj = glm::ortho<float>(0.0f, (float)SCREEN_WIDTH, 0.0f, (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+   glm::mat4 view = glm::lookAt<float>(glm::vec3(0.f, 0.f, 5.0f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f));
    
    glEnable(GL_BLEND);
    glBindTexture(GL_TEXTURE_2D, myTexture);

@@ -122,9 +122,11 @@ int add_ttf_font(EA::WebKit::EAWebKitLib* wk, const char* ttfFile)
         free(buffer);
         return 0;
     }
-    int res = ts->AddFace(buffer, fileSize);
-    free(buffer);
-    return res;
+    
+    int numFaces = ts->AddFace(buffer, fileSize);
+
+    //free(buffer);
+    return numFaces;
 }
 
 int init_system_fonts(EA::WebKit::EAWebKitLib* wk) 

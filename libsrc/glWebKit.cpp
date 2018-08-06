@@ -126,6 +126,8 @@ bool init()
     wk->Init(&callbacks, &systems);
 
     EA::WebKit::Parameters& params = wk->GetParameters();
+    params.mpLocale = "en-us";
+    params.mpApplicationName = "EAWebKit";
     params.mEAWebkitLogLevel = 4;
     params.mHttpManagerLogLevel = 4;
     params.mRemoteWebInspectorPort = 1234;
@@ -150,7 +152,8 @@ bool init()
     ts->Init();
     
     //init_system_fonts(wk);
-    add_ttf_font(wk, "Roboto-Regular.ttf");
+    int ret = add_ttf_font(wk, "Roboto-Regular.ttf");
+    std::cout << "Adding font returned: " << ret << std::endl;
     
     
     v = wk->CreateView();
@@ -159,7 +162,7 @@ bool init()
     vp.mDisplaySurface = nullptr; // use default surface
     vp.mWidth = 1280;
     vp.mHeight = 720;
-    vp.mBackgroundColor = 0; //clear  0xffffffff; //white  
+    vp.mBackgroundColor = 0; //clear  0xffffffff; //white
     vp.mTileSize = 256;
     vp.mUseTiledBackingStore = false;
     vp.mpUserData = v;
@@ -169,7 +172,7 @@ bool init()
     
     //v->SetURI("test.html");
     //const char test[] = "<div style='border:10px dashed red;'> </div>";
-    const char test[] = "<div style = 'border:10px dashed red;'> </div><h1>My First Heading</h1><p>My first paragraph.</p>";
+    const char test[] = "<div style = 'border:10px dashed red;'></div><h1>Test</h1>";
     
     v->SetHtml(test, sizeof(test));
 
