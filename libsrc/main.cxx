@@ -12,6 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "glWebKit.h"
+#include "glWebkitUtils.h"
 
 #include "glUtil.h"
 
@@ -24,6 +25,8 @@ const int SCREEN_HEIGHT = 720;
 
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
+
+EA::WebKit::View* v;
 
 //OpenGL context
 SDL_GLContext gContext;
@@ -170,50 +173,17 @@ void initGL()
    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void updateTexture(unsigned int id)
-{
-   if(!v)
-      return;
-
-   EA::WebKit::ISurface* surface = v->GetDisplaySurface();
-
-   int w, h;
-   surface->GetContentDimensions(&w, &h);
-   
-   EA::WebKit::ISurface::SurfaceDescriptor sd = {};
-   surface->Lock(&sd);
-
-   //flip the image for opengl style layout where first pixel is bottom left
-   int bytesPerRow = 4 * w;
-   unsigned char* flipBuffer = new unsigned char[w * h * 4];
-   unsigned char* readhead = (unsigned char*)sd.mData + (w * h * 4) - bytesPerRow;
-   unsigned char* writeHead = flipBuffer;
-   for(int i = 0; i < h; i++)
-   {
-      memcpy(writeHead, readhead, bytesPerRow);
-      writeHead += bytesPerRow;
-      readhead -= bytesPerRow;
-   }
-
-   glBindTexture(GL_TEXTURE_2D, id);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, flipBuffer);
-
-   delete[] flipBuffer;
-   
-   surface->Unlock();
-}
-
 void drawCube()
 {
    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
 }
 
-void drawInterface()
+void drawInterface(EA::WebKit::View* v)
 {
-   update();
-   updateTexture(myTexture);
+   updateGLTexture(v, myTexture);
 
    //glm::mat4 proj = glm::perspective(60.0f, (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
    glm::mat4 proj = glm::ortho<float>(0.0f, (float)SCREEN_WIDTH, 0.0f, (float)SCREEN_HEIGHT, 0.1f, 100.0f);
@@ -260,7 +230,8 @@ int main(int argc, char** argv)
 
    //init eawebkit
    initGL();
-   init();
+   initWebkit();
+   v = createView();
 
    //While application is running
    while(!quit)
@@ -275,14 +246,17 @@ int main(int argc, char** argv)
          }
       }      
 
+      updateWebkit();
+      updateView(v);
+
       drawCube();
-      drawInterface();
+      drawInterface(v);
 
       //Update screen
       SDL_GL_SwapWindow(gWindow);
    }
 
-   shutdown();
+   destroyView(v);
 
    //Destroy window
    SDL_DestroyWindow(gWindow);

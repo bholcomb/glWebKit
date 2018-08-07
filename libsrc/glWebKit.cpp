@@ -10,11 +10,10 @@
 
 #include <windows.h>
 
+#include <list>
 #include <iostream>
 
 EA::WebKit::EAWebKitLib* wk = nullptr;
-EA::WebKit::View* v = nullptr;
-
 
 // Callbacks
 double timerCallback() 
@@ -81,136 +80,147 @@ public:
 protected:
 };
 
-bool init()
-{  
-    // init the systems: using DefaultAllocator, DefaultFileSystem, no text/font support, DefaultThreadSystem
-    struct EA::WebKit::AppSystems systems = { nullptr };
-    
-    systems.mThreadSystem = new StdThreadSystem;
-    systems.mEAWebkitClient = new GLWebkitClient();
+bool initWebkit()
+{
+   // init the systems: using DefaultAllocator, DefaultFileSystem, no text/font support, DefaultThreadSystem
+   struct EA::WebKit::AppSystems systems = { nullptr };
 
-    typedef EA::WebKit::EAWebKitLib* (*PF_CreateEAWebkitInstance)(void);
-    PF_CreateEAWebkitInstance create_Webkit_instance = nullptr;
+   systems.mThreadSystem = new StdThreadSystem;
+   systems.mEAWebkitClient = new GLWebkitClient();
+
+   typedef EA::WebKit::EAWebKitLib* (*PF_CreateEAWebkitInstance)(void);
+   PF_CreateEAWebkitInstance create_Webkit_instance = nullptr;
 
 #ifdef _DEBUG
-    HMODULE wdll = LoadLibraryA("EAWebkitd.dll");
+   HMODULE wdll = LoadLibraryA("EAWebkitd.dll");
 #else
-    HMODULE wdll = LoadLibraryA("EAWebkit.dll");
+   HMODULE wdll = LoadLibraryA("EAWebkit.dll");
 #endif // _DEBUG
-    if (wdll != nullptr) 
-    {
-        create_Webkit_instance = reinterpret_cast<PF_CreateEAWebkitInstance>(GetProcAddress(wdll, "CreateEAWebkitInstance"));
-    }
+   if(wdll != nullptr)
+   {
+      create_Webkit_instance = reinterpret_cast<PF_CreateEAWebkitInstance>(GetProcAddress(wdll, "CreateEAWebkitInstance"));
+   }
 
-    if (!create_Webkit_instance) 
-    {
-        printf("EAWebkit.dll missing\n");
-        exit(1);
-    }
+   if(!create_Webkit_instance)
+   {
+      std::cout << "EAWebkit.dll missing" << std::endl;
+      return false;
+   }
 
-    // init winsock manually, this is required
-    WSADATA wsadata = {};
-    WSAStartup(MAKEWORD(2, 0), &wsadata);
+   // init winsock manually, this is required
+   WSADATA wsadata = {};
+   WSAStartup(MAKEWORD(2, 0), &wsadata);
 
 
-    wk = create_Webkit_instance();
-    
-    //check that dll is same version as our headers
-    const char* verStr = wk->GetVersion();
-    if(strcmp(verStr, EAWEBKIT_VERSION_S) != 0)
-    {
-       std::cout << "Error!  Mismatched versions of EA Webkit" << std::endl;
-       exit(1);
-    }
+   wk = create_Webkit_instance();
 
-    wk->Init(&callbacks, &systems);
+   //check that dll is same version as our headers
+   const char* verStr = wk->GetVersion();
+   if(strcmp(verStr, EAWEBKIT_VERSION_S) != 0)
+   {
+      std::cout << "Error!  Mismatched versions of EA Webkit" << std::endl;
+      return false;
+   }
 
-    EA::WebKit::Parameters& params = wk->GetParameters();
-    params.mpLocale = "en-us";
-    params.mpApplicationName = "EAWebKit";
-    params.mEAWebkitLogLevel = 4;
-    params.mHttpManagerLogLevel = 4;
-    params.mRemoteWebInspectorPort = 1234;
-    params.mReportJSExceptionCallstacks = true;
-    params.mJavaScriptStackSize = 1024 * 1024;
-    params.mVerifySSLCert = false;
+   wk->Init(&callbacks, &systems);
 
-    // attention: you need to load all the fonts that are set, otherwise the renderer will crash
-    wcscpy((wchar_t*)params.mFontFamilyStandard, L"Roboto");
-    wcscpy((wchar_t*)params.mFontFamilySerif, L"Roboto");
-    wcscpy((wchar_t*)params.mFontFamilySansSerif, L"Roboto");
-    wcscpy((wchar_t*)params.mFontFamilyMonospace, L"Roboto");
-    wcscpy((wchar_t*)params.mFontFamilyCursive, L"Roboto");
-    wcscpy((wchar_t*)params.mFontFamilyFantasy, L"Roboto");
-    wcscpy((wchar_t*)params.mSystemFont, L"Roboto");
-    params.mSystemFontBold = false;
+   EA::WebKit::Parameters& params = wk->GetParameters();
+   params.mEAWebkitLogLevel = 4;
+   params.mHttpManagerLogLevel = 4;
+   params.mRemoteWebInspectorPort = 1234;
+   params.mReportJSExceptionCallstacks = true;
+   params.mJavaScriptStackSize = 1024 * 1024;
+   params.mVerifySSLCert = false;
 
-    wk->SetParameters(params);
-    
-    //initialize the text system (if it hasn't been already)
-    EA::WebKit::ITextSystem* ts = wk->GetTextSystem();
-    ts->Init();
-    
-    //init_system_fonts(wk);
-    int ret = add_ttf_font(wk, "Roboto-Regular.ttf");
-    std::cout << "Adding font returned: " << ret << std::endl;
-    
-    
-    v = wk->CreateView();
-    EA::WebKit::ViewParameters vp;
-    vp.mHardwareRenderer = nullptr; // use default renderer
-    vp.mDisplaySurface = nullptr; // use default surface
-    vp.mWidth = 1280;
-    vp.mHeight = 720;
-    vp.mBackgroundColor = 0; //clear  0xffffffff; //white
-    vp.mTileSize = 256;
-    vp.mUseTiledBackingStore = false;
-    vp.mpUserData = v;
-    v->InitView(vp);
-    v->SetSize(EA::WebKit::IntSize(vp.mWidth, vp.mHeight));
-    
-    
-    //v->SetURI("test.html");
-    //const char test[] = "<div style='border:10px dashed red;'> </div>";
-    const char test[] = "<div style = 'border:10px dashed red;'></div><h1>Test</h1>";
-    
-    v->SetHtml(test, sizeof(test));
+   // attention: you need to load all the fonts that are set, otherwise the renderer will crash
+   wcscpy((wchar_t*)params.mFontFamilyStandard, L"Roboto");
+   wcscpy((wchar_t*)params.mFontFamilySerif, L"Roboto");
+   wcscpy((wchar_t*)params.mFontFamilySansSerif, L"Roboto");
+   wcscpy((wchar_t*)params.mFontFamilyMonospace, L"Roboto");
+   wcscpy((wchar_t*)params.mFontFamilyCursive, L"Roboto");
+   wcscpy((wchar_t*)params.mFontFamilyFantasy, L"Roboto");
+   wcscpy((wchar_t*)params.mSystemFont, L"Roboto");
+   params.mSystemFontBold = false;
 
-    return true;
+   wk->SetParameters(params);
+
+   //initialize the text system (if it hasn't been already)
+   EA::WebKit::ITextSystem* ts = wk->GetTextSystem();
+   ts->Init();
+
+   //init_system_fonts(wk);
+   int ret = add_ttf_font(wk, "Roboto-Regular.ttf");
+   std::cout << "Adding font returned: " << ret << std::endl;
+
+   return true;
 }
 
-void update() 
+EA::WebKit::View* createView()
 {
-    if (!wk || !v) 
+   EA::WebKit::View* v = 0;
+
+   v = wk->CreateView();
+   EA::WebKit::ViewParameters vp;
+   vp.mHardwareRenderer = nullptr; // use default renderer
+   vp.mDisplaySurface = nullptr; // use default surface
+   vp.mWidth = 1280;
+   vp.mHeight = 720;
+   vp.mBackgroundColor = 0; //clear  0xffffffff; //white
+   vp.mTileSize = 256;
+   vp.mUseTiledBackingStore = false;
+   vp.mpUserData = v;
+   v->InitView(vp);
+   v->SetSize(EA::WebKit::IntSize(vp.mWidth, vp.mHeight));
+
+   std::string url = std::string("file:///") + getExePath() + "/UI/test.html";
+   v->SetURI(url.c_str());
+
+   //const char test[] = "<div style='border:10px dashed red;'> </div>";
+   const char test[] = "<div style = 'border:10px dashed red;'></div><h1>Test</h1>";
+   //v->SetHtml(test, sizeof(test));
+
+   return v;
+}
+
+void updateWebkit()
+{
+   if (!wk) 
        return;
 
     wk->Tick();
     
+}
+
+void updateView(EA::WebKit::View* v)
+{
     v->ForceInvalidateFullView();
     v->Paint();
 }
 
-void resize(int width, int height)
+void resize(EA::WebKit::View* v, int width, int height)
 {
     if (!v) 
        return;
+
     v->SetSize(EA::WebKit::IntSize(width, height));
 }
 
-void mousemove(int x, int y) 
+void mousemove(EA::WebKit::View* v, int x, int y)
 {
     if (!v) 
        return;
+
     EA::WebKit::MouseMoveEvent e = {};
     e.mX = x;
     e.mY = y;
     v->OnMouseMoveEvent(e);
 }
 
-void mousebutton(int x, int y, int btn, bool depressed) 
+void mousebutton(EA::WebKit::View* v, int x, int y, int btn, bool depressed)
 {
     if (!v) 
        return;
+
     EA::WebKit::MouseButtonEvent e = {};
     e.mId = btn;
     e.mX = x;
@@ -219,10 +229,11 @@ void mousebutton(int x, int y, int btn, bool depressed)
     v->OnMouseButtonEvent(e);
 }
 
-void mousewheel(int x, int y, int keys, int delta) 
+void mousewheel(EA::WebKit::View* v, int x, int y, int keys, int delta)
 {
     if (!v) 
        return;
+
     EA::WebKit::MouseWheelEvent e = {};
     e.mX = x;
     e.mY = y;
@@ -234,10 +245,11 @@ void mousewheel(int x, int y, int keys, int delta)
     v->OnMouseWheelEvent(e);
 }
 
-void keyboard(int id, bool ischar, bool depressed)
+void keyboard(EA::WebKit::View* v, int id, bool ischar, bool depressed)
 {
     if (!v) 
        return;
+
     EA::WebKit::KeyboardEvent e = {};
     e.mId = id;
     e.mbChar = ischar;
@@ -245,14 +257,15 @@ void keyboard(int id, bool ischar, bool depressed)
     v->OnKeyboardEvent(e);
 }
 
-void reload() 
+void reload(EA::WebKit::View* v)
 {
     if (!v)
        return;
+
     v->Refresh();
 }
 
-void shutdown()
+void destroyView(EA::WebKit::View* v)
 {
    if(!wk || !v)
       return;

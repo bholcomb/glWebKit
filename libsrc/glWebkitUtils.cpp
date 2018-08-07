@@ -1,5 +1,8 @@
 #include "glWebkitUtils.h"
 
+
+#include <GL/glew.h>
+
 #include <EAWebKit/EAWebKit.h>
 #include <EAWebKit/EAWebkitAllocator.h>
 #include <EAWebKit/EAWebKitFileSystem.h>
@@ -122,10 +125,10 @@ int add_ttf_font(EA::WebKit::EAWebKitLib* wk, const char* ttfFile)
         free(buffer);
         return 0;
     }
-    
+
+    //Text system will take ownership of this memory
     int numFaces = ts->AddFace(buffer, fileSize);
 
-    //free(buffer);
     return numFaces;
 }
 
@@ -142,4 +145,37 @@ int init_system_fonts(EA::WebKit::EAWebKitLib* wk)
         add_ttf_font(wk, fonts[i].c_str());
     }
     return 0;
+}
+
+void updateGLTexture(EA::WebKit::View* v, unsigned int id)
+{
+   if(!v)
+      return;
+
+   EA::WebKit::ISurface* surface = v->GetDisplaySurface();
+
+   int w, h;
+   surface->GetContentDimensions(&w, &h);
+
+   EA::WebKit::ISurface::SurfaceDescriptor sd = {};
+   surface->Lock(&sd);
+
+   //flip the image for opengl style layout where first pixel is bottom left
+   int bytesPerRow = 4 * w;
+   unsigned char* flipBuffer = new unsigned char[w * h * 4];
+   unsigned char* readhead = (unsigned char*)sd.mData + (w * h * 4) - bytesPerRow;
+   unsigned char* writeHead = flipBuffer;
+   for(int i = 0; i < h; i++)
+   {
+      memcpy(writeHead, readhead, bytesPerRow);
+      writeHead += bytesPerRow;
+      readhead -= bytesPerRow;
+   }
+
+   glBindTexture(GL_TEXTURE_2D, id);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, flipBuffer);
+
+   delete[] flipBuffer;
+
+   surface->Unlock();
 }
