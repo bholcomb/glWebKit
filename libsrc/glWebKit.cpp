@@ -132,25 +132,15 @@ bool initWebkit()
    params.mJavaScriptStackSize = 1024 * 1024;
    params.mVerifySSLCert = false;
 
-   // attention: you need to load all the fonts that are set, otherwise the renderer will crash
-   wcscpy((wchar_t*)params.mFontFamilyStandard, L"Roboto");
-   wcscpy((wchar_t*)params.mFontFamilySerif, L"Roboto");
-   wcscpy((wchar_t*)params.mFontFamilySansSerif, L"Roboto");
-   wcscpy((wchar_t*)params.mFontFamilyMonospace, L"Roboto");
-   wcscpy((wchar_t*)params.mFontFamilyCursive, L"Roboto");
-   wcscpy((wchar_t*)params.mFontFamilyFantasy, L"Roboto");
-   wcscpy((wchar_t*)params.mSystemFont, L"Roboto");
-   params.mSystemFontBold = false;
-
    wk->SetParameters(params);
 
-   //initialize the text system (if it hasn't been already)
-   EA::WebKit::ITextSystem* ts = wk->GetTextSystem();
-   ts->Init();
-
    //init_system_fonts(wk);
-   int ret = add_ttf_font(wk, "Roboto-Regular.ttf");
-   std::cout << "Adding font returned: " << ret << std::endl;
+   
+   //should be pulling these from the OS by their family type
+   //times new roman is the default fallback if a font isn't found, so we need 
+   //to at least load this (should probably be built in)
+   int ret = add_ttf_font(wk, "times.ttf");
+   std::cout << "Adding default font returned: " << ret << std::endl;
 
    return true;
 }
