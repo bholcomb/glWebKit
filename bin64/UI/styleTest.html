@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<style>
+@font-face {
+  font-family: 'Roboto';
+  src: url('Roboto-Regular.ttf') format('truetype');
+}
+  
+* {
+  font-family: Roboto;
+}
+@keyframes animateBorder {
+  from {
+    border: 15px dashed red;
+  }
+  to {
+    border: 5px dashed green;
+  }
+}
+</style>
+<h1>CSS test</h1>
+<div style="margin:5px; border: 15px dashed red;width:80px;height:80px;animation: 1s animateBorder infinite;animation-direction: alternate-reverse"></div>
+<div style="margin:5px; border: 10px dashed green;width:80px;height:80px;border-radius:40px;"></div>
+<div style="margin:5px; border: 5px dashed blue;width:80px;height:80px;background: linear-gradient(red, yellow);"></div>
+
+<h1>Text test</h1>
+<b>Hello</b> world!
+
+
+<h1>SVG Test</h1>
+<svg width="300" height="200">
+  <polygon points="100,10 40,198 190,78 10,78 160,198"
+  style="fill:lime;stroke:purple;stroke-width:5;fill-rule:evenodd;" />
+</svg>
+
+<input type="button" value="foo" onclick="alert('test');">
+
+
+</body>
+</html>

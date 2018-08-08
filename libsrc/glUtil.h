@@ -20,5 +20,25 @@ struct DrawVertex
 {
    Vector3 position;
    Vector2 uv;
+   int color;
 };
 
+struct DrawCall
+{
+   unsigned int myVertexBuffer;
+   unsigned int myIndexBuffer;
+   unsigned int myProgram;
+   unsigned int myVao;
+   unsigned int myTexture;
+   unsigned int myViewUniform;
+   unsigned int myProjectionUniform;
+   unsigned int myModelUniform;
+   unsigned int myTextureUniform;
+   unsigned int indexCount;
+};
+
+void printShaderInfoLog(unsigned int obj);
+void printProgramInfoLog(unsigned int obj);
+
+unsigned int createWebkitShader();
+unsigned int createCubeShader();

@@ -22,3 +22,5 @@ void mousewheel(EA::WebKit::View* v, int x, int y, int keys, int delta);
 void keyboard(EA::WebKit::View* v, int id, bool ischar, bool depressed);
 void reload(EA::WebKit::View* v);
 void destroyView(EA::WebKit::View* v);
+
+double timerCallback();

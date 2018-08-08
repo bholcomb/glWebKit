@@ -1,4 +1,5 @@
 #include "glWebkitUtils.h"
+#include "glWebKit.h"
 
 
 #include <GL/glew.h>
@@ -19,9 +20,10 @@
 #include <Shlwapi.h>
 #include <vector>
 
+#include <iostream>
 #include <algorithm>
 
-
+unsigned int frame = 0;
 
 std::string getExePath()
 {
@@ -147,35 +149,59 @@ int init_system_fonts(EA::WebKit::EAWebKitLib* wk)
     return 0;
 }
 
+unsigned int vPbo[2] = { 0, 0 };
+unsigned char* buffer[2] = { 0, 0 };
+int index = 0;
+int nextIndex = 0;
+
 void updateGLTexture(EA::WebKit::View* v, unsigned int id)
 {
    if(!v)
       return;
 
-   EA::WebKit::ISurface* surface = v->GetDisplaySurface();
-
    int w, h;
+   EA::WebKit::ISurface* surface = v->GetDisplaySurface();
    surface->GetContentDimensions(&w, &h);
+   int dataSize = w * h * 4;
+
+   index = (index + 1) % 2;
+   nextIndex = (index + 1) % 2;
+   double start, stop;
+
+   //lazily create and map the PBOs
+   if(vPbo[0] == 0)
+   {
+      glGenBuffers(2, vPbo);
+
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, vPbo[0]);
+      glBufferStorage(GL_PIXEL_UNPACK_BUFFER, dataSize, 0, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+      buffer[0] = (unsigned char*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, dataSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, vPbo[1]);
+      glBufferStorage(GL_PIXEL_UNPACK_BUFFER, dataSize, 0, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+      buffer[1] = (unsigned char*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, dataSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+   }
 
    EA::WebKit::ISurface::SurfaceDescriptor sd = {};
    surface->Lock(&sd);
 
-   //flip the image for opengl style layout where first pixel is bottom left
-   int bytesPerRow = 4 * w;
-   unsigned char* flipBuffer = new unsigned char[w * h * 4];
-   unsigned char* readhead = (unsigned char*)sd.mData + (w * h * 4) - bytesPerRow;
-   unsigned char* writeHead = flipBuffer;
-   for(int i = 0; i < h; i++)
+   //copy the last frame's data to the texture.  This is a frame of lag, but should allow for fast transfers
+   start = timerCallback();
+   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, vPbo[index]);
+   glTextureSubImage2D(id, 0, 0, 0, w, h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+   stop = timerCallback();
+   //if(frame % 100 == 0) std::cout << "glTextureSubImage2D time: " << (stop - start) * 1000.0 << "ms" << std::endl;
+
+   //copy the current data to the next buffer
+   start = timerCallback();
+   if(buffer)
    {
-      memcpy(writeHead, readhead, bytesPerRow);
-      writeHead += bytesPerRow;
-      readhead -= bytesPerRow;
+      //This image is actually flipped, but we're going to handle that in the shader instead of trying to actually flip
+      //it on the CPU
+      memcpy(buffer[nextIndex], sd.mData, w * h * 4);
    }
+   stop = timerCallback();
+   //if(frame % 100 == 0) std::cout << "Upload to PBO time: " << (stop - start) * 1000.0 << "ms" << std::endl;
 
-   glBindTexture(GL_TEXTURE_2D, id);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, flipBuffer);
-
-   delete[] flipBuffer;
-
-   surface->Unlock();
+   surface->Unlock();   
 }

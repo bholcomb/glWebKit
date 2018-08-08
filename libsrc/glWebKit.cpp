@@ -24,7 +24,7 @@ double timerCallback()
     LARGE_INTEGER start;
     ::QueryPerformanceCounter(&start);
 
-    return static_cast<double>(start.QuadPart) / frequency.QuadPart;
+    return static_cast<double>(start.QuadPart) / (double)frequency.QuadPart;
 }
 
 double monotonicTimerCallback() 
@@ -162,7 +162,7 @@ EA::WebKit::View* createView()
    v->InitView(vp);
    v->SetSize(EA::WebKit::IntSize(vp.mWidth, vp.mHeight));
 
-   std::string url = std::string("file:///") + getExePath() + "/UI/test.html";
+   std::string url = std::string("file:///") + getExePath() + "/UI/actionMenu.html";
    v->SetURI(url.c_str());
 
    //const char test[] = "<div style='border:10px dashed red;'> </div>";
@@ -183,7 +183,7 @@ void updateWebkit()
 
 void updateView(EA::WebKit::View* v)
 {
-    v->ForceInvalidateFullView();
+    //v->ForceInvalidateFullView();
     v->Paint();
 }
 

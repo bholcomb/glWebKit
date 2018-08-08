@@ -4,6 +4,8 @@
 #include <vector>
 #include <EAWebKit\EAWebKit.h>
 
+extern unsigned int frame;
+
 std::string getExePath();
 std::string replaceAll(std::string str, const std::string& from, const std::string& to);
 
