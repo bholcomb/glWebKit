@@ -158,8 +158,7 @@ const char* cubeFragmentShader =
 "}\n";
 #pragma endregion
 
-
-unsigned int createWebkitShader()
+unsigned int createShader(const char* vert, const char* frag)
 {
    unsigned int vs;
    unsigned int ps;
@@ -170,43 +169,13 @@ unsigned int createWebkitShader()
    prog = glCreateProgram();
 
    //create the shaders
-   int len = strlen(webkitVertexShader);
-   glShaderSource(vs, 1, (const char**)&webkitVertexShader, &len);
+   int len = strlen(vert);
+   glShaderSource(vs, 1, (const char**)&vert, &len);
    glCompileShader(vs);
    printShaderInfoLog(vs);
 
-   len = strlen(webkitFragmentShader);
-   glShaderSource(ps, 1, (const char**)&webkitFragmentShader, &len);
-   glCompileShader(ps);
-   printShaderInfoLog(ps);
-
-   //link to a program
-   glAttachShader(prog, vs);
-   glAttachShader(prog, ps);
-   glLinkProgram(prog);
-   printProgramInfoLog(prog);
-
-   return prog;
-}
-
-unsigned int createCubeShader()
-{
-   unsigned int vs;
-   unsigned int ps;
-   unsigned int prog;
-
-   vs = glCreateShader(GL_VERTEX_SHADER);
-   ps = glCreateShader(GL_FRAGMENT_SHADER);
-   prog = glCreateProgram();
-
-   //create the shaders
-   int len = strlen(cubeVertexShader);
-   glShaderSource(vs, 1, (const char**)&cubeVertexShader, &len);
-   glCompileShader(vs);
-   printShaderInfoLog(vs);
-
-   len = strlen(cubeFragmentShader);
-   glShaderSource(ps, 1, (const char**)&cubeFragmentShader, &len);
+   len = strlen(frag);
+   glShaderSource(ps, 1, (const char**)&frag, &len);
    glCompileShader(ps);
    printShaderInfoLog(ps);
 

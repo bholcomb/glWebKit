@@ -11,6 +11,12 @@ solution ("WebkitTest")
   filter {"platforms:x64", "kind:ConsoleApp or WindowedApp or SharedLib"}
     targetdir ('../bin64')
 
+  configuration { "Debug" }
+    defines { "DEBUG", "TRACE"}
+    optimize "Off"
+ 
+  configuration { "Release" }
+    optimize "Speed"
 -------------------------------------------------------------------------------
 -- Projects
 
@@ -25,7 +31,8 @@ project ("glWebkit")
     'OpenGL32.lib',
     'ws2_32.lib',
     'Shlwapi.lib',
-    'glew32.lib'
+    'glew32.lib',
+    'bcrypt.lib'
   }
   
   defines {

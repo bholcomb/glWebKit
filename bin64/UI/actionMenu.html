@@ -41,11 +41,17 @@
    background: white;
    height: 50px;
 }
-
 </style>
 
+<script>
+function openAlert()
+{
+   alert("Hello there!");
+}
+</script>
+
 <div id="actionMenu">Action Menu
-   <div class = "actionItem">item 1</div> 
+   <div class = "actionItem" onclick="openAlert()">item 1</div> 
    <div class = "actionItem">item 2</div>
    <div class = "actionItem">item 3</div>
    <div class = "actionItem">item 4</div>

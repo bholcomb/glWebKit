@@ -43,6 +43,7 @@ void initGL()
       exit(0);
    }
 
+   //common rendering settings, ideally would be part of the draw call
    glEnable(GL_BLEND);
    glBlendEquation(GL_FUNC_ADD);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -72,7 +73,7 @@ void initScreenQuad()
    glGenBuffers(1, &screenQuad.myIndexBuffer);
    glGenVertexArrays(1, &screenQuad.myVao);
    
-   screenQuad.myProgram = createWebkitShader();
+   screenQuad.myProgram = createShader(webkitVertexShader, webkitFragmentShader);
    
    //get uniform locations
    screenQuad.myViewUniform = glGetUniformLocation(screenQuad.myProgram, "view");
@@ -156,7 +157,7 @@ void initCube()
    glGenBuffers(1, &cube.myIndexBuffer);
    glGenVertexArrays(1, &cube.myVao);
 
-   cube.myProgram = createCubeShader();
+   cube.myProgram = createShader(cubeVertexShader, cubeFragmentShader);
 
    //get uniform locations
    cube.myViewUniform = glGetUniformLocation(cube.myProgram, "view");
@@ -273,6 +274,8 @@ int main(int argc, char** argv)
    initScreenQuad();
    initCube();
    initWebkit();
+
+   //create the web view
    v = createView();
 
    //While application is running
@@ -329,6 +332,8 @@ int main(int argc, char** argv)
 
 
       frame++;
+
+      
 
       //Update screen
       SDL_GL_SwapWindow(gWindow);

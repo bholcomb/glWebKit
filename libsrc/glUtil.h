@@ -37,8 +37,12 @@ struct DrawCall
    unsigned int indexCount;
 };
 
+extern const char* webkitVertexShader;
+extern const char* webkitFragmentShader;
+extern const char* cubeVertexShader;
+extern const char* cubeFragmentShader;
+
 void printShaderInfoLog(unsigned int obj);
 void printProgramInfoLog(unsigned int obj);
 
-unsigned int createWebkitShader();
-unsigned int createCubeShader();
+unsigned int createShader(const char* vert, const char* frag);

@@ -3,12 +3,12 @@
 #include "glWebkitUtils.h"
 #include "glWebkitRenderer.h"
 #include "glWebkitThreading.h"
+#include "glWebkitClient.h"
 
 #include <EAWebKit\EAWebKit>
-// #include <EAText\EAText.h>
-// #include <EAText\EATextFontServer.h>
 
 #include <windows.h>
+#include <bcrypt.h>
 
 #include <list>
 #include <iostream>
@@ -34,10 +34,28 @@ double monotonicTimerCallback()
 
 bool cryptographicallyRandomValueCallback(unsigned char *buffer, size_t length)
 {
-    HCRYPTPROV hCryptProv = 0;
-    CryptAcquireContext(&hCryptProv, 0, MS_DEF_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
-    CryptGenRandom(hCryptProv, length, buffer);
-    CryptReleaseContext(hCryptProv, 0);
+   //deprecated API, using newer api below
+//     HCRYPTPROV hCryptProv = 0;
+//     CryptAcquireContext(&hCryptProv, 0, MS_DEF_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+//     CryptGenRandom(hCryptProv, length, buffer);
+//     CryptReleaseContext(hCryptProv, 0);
+
+    BCRYPT_ALG_HANDLE algorithm;
+    NTSTATUS ret;
+    ret = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_RNG_ALGORITHM, 0, 0);
+    if(ret != 0)
+    {
+       std::cout << "Failed to initialize cryto algorithm provider.  Return code: " << ret << std::endl;
+       return false;
+    }
+
+    ret = BCryptGenRandom(algorithm, buffer, length, 0);
+    if(ret != 0)
+    {
+       std::cout << "Failed to get cryto random number.  Return code: " << ret << std::endl;
+       return false;
+    }
+    
     return true;  // Returns true if no error, else false
 }
 
@@ -50,41 +68,30 @@ void* stackBaseCallback()
 
 void getCookiesCallback(const char16_t* pUrl, EA::WebKit::EASTLFixedString16Wrapper& result, uint32_t flags)
 {
-
+   std::cout << __FUNCTION__ << std::endl;
 }
 
 bool setCookieCallback(const EA::WebKit::CookieEx& cookie)
 {
+   std::cout << __FUNCTION__ << std::endl;
    return false;  
 }
 
-
-
+//
 struct EA::WebKit::AppCallbacks callbacks = {
-    timerCallback,
-    monotonicTimerCallback,
-    stackBaseCallback,
-    cryptographicallyRandomValueCallback,
-    getCookiesCallback,
-    setCookieCallback
+   timerCallback,
+   monotonicTimerCallback,
+   stackBaseCallback,
+   cryptographicallyRandomValueCallback,
+   getCookiesCallback,
+   setCookieCallback
 };
 
-class GLWebkitClient : public EA::WebKit::EAWebKitClient 
-{
-public:
-   virtual void DebugLog(EA::WebKit::DebugLogInfo& l) override
-   {
-      std::cout << l.mType << ": " << l.mpLogText << std::endl;
-   }
-
-protected:
-};
+// init the systems: using DefaultAllocator, DefaultFileSystem, no text/font support, DefaultThreadSystem
+struct EA::WebKit::AppSystems systems = { nullptr };
 
 bool initWebkit()
 {
-   // init the systems: using DefaultAllocator, DefaultFileSystem, no text/font support, DefaultThreadSystem
-   struct EA::WebKit::AppSystems systems = { nullptr };
-
    systems.mThreadSystem = new StdThreadSystem;
    systems.mEAWebkitClient = new GLWebkitClient();
 
@@ -101,16 +108,15 @@ bool initWebkit()
       create_Webkit_instance = reinterpret_cast<PF_CreateEAWebkitInstance>(GetProcAddress(wdll, "CreateEAWebkitInstance"));
    }
 
+   // init winsock manually, this is required
+   WSADATA wsadata = {};
+   WSAStartup(MAKEWORD(2, 0), &wsadata);
+
    if(!create_Webkit_instance)
    {
       std::cout << "EAWebkit.dll missing" << std::endl;
       return false;
    }
-
-   // init winsock manually, this is required
-   WSADATA wsadata = {};
-   WSAStartup(MAKEWORD(2, 0), &wsadata);
-
 
    wk = create_Webkit_instance();
 
@@ -122,6 +128,7 @@ bool initWebkit()
       return false;
    }
 
+   //initialize the system
    wk->Init(&callbacks, &systems);
 
    EA::WebKit::Parameters& params = wk->GetParameters();
@@ -129,13 +136,11 @@ bool initWebkit()
    params.mHttpManagerLogLevel = 4;
    params.mRemoteWebInspectorPort = 1234;
    params.mReportJSExceptionCallstacks = true;
-   params.mJavaScriptStackSize = 1024 * 1024;
-   params.mVerifySSLCert = false;
+   params.mVerifySSLCert = true;
+   params.mJavaScriptStackSize = 1024 * 1024; //1MB of stack space
 
    wk->SetParameters(params);
 
-   //init_system_fonts(wk);
-   
    //should be pulling these from the OS by their family type
    //times new roman is the default fallback if a font isn't found, so we need 
    //to at least load this (should probably be built in)
@@ -165,9 +170,7 @@ EA::WebKit::View* createView()
    std::string url = std::string("file:///") + getExePath() + "/UI/actionMenu.html";
    v->SetURI(url.c_str());
 
-   //const char test[] = "<div style='border:10px dashed red;'> </div>";
-   const char test[] = "<div style = 'border:10px dashed red;'></div><h1>Test</h1>";
-   //v->SetHtml(test, sizeof(test));
+   //v->SetURI("http://google.com");
 
    return v;
 }
