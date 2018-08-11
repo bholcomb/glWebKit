@@ -11,14 +11,14 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
-#include "glWebKit.h"
-#include "glWebkitUtils.h"
+#include "glWebKit/glWebKit.h"
 
 #include "glUtil.h"
 
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1280;
@@ -200,8 +200,8 @@ void drawCube()
    static float rotx = 0;
    static float roty = 0;
 
-   rotx += 0.001;
-   roty += 0.001;
+   rotx += 0.001f;
+   roty += 0.001f;
 
    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -276,7 +276,10 @@ int main(int argc, char** argv)
    initWebkit();
 
    //create the web view
-   v = createView();
+   v = createView(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+   std::string url = std::string("file:///") + SDL_GetBasePath() + "/UI/actionMenu.html";
+   setViewUrl(v, url.c_str());
 
    //While application is running
    while(!quit)
@@ -299,7 +302,7 @@ int main(int argc, char** argv)
 
             if(e.key.keysym.sym == SDLK_F5)
             {
-               v->Refresh();
+               reload(v);
             }
          }
 
@@ -314,32 +317,21 @@ int main(int argc, char** argv)
          }
       }
 
-      double start, stop;
-
-      if(frame % 500 == 0) std::cout << "------------------------------------------------------" << std::endl;
-      
-      start = timerCallback();
+      //update the things
       updateWebkit();
       updateView(v);
-      stop = timerCallback();
-      if(frame % 500 == 0) std::cout << "Webview update time: " << (stop - start) * 1000.0 << "ms" << std::endl;
-
-      start = timerCallback();
+     
+      //draw the things
       drawCube();
-      drawInterface(v);
-      stop = timerCallback();
-      if(frame % 500 == 0) std::cout << "Update OpenGL and render: " << (stop - start) * 1000.0 << "ms" << std::endl;
-
-
-      frame++;
-
-      
+      drawInterface(v);      
 
       //Update screen
       SDL_GL_SwapWindow(gWindow);
    }
 
+   //cleanup Webkit
    destroyView(v);
+   shutdownWebKit();
 
    //Destroy window
    SDL_DestroyWindow(gWindow);

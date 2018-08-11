@@ -1,5 +1,5 @@
+#include "glWebKit/glWebKit.h"
 
-#include "glWebkit.h"
 #include "glWebkitUtils.h"
 #include "glWebkitRenderer.h"
 #include "glWebkitThreading.h"
@@ -77,7 +77,6 @@ bool setCookieCallback(const EA::WebKit::CookieEx& cookie)
    return false;  
 }
 
-//
 struct EA::WebKit::AppCallbacks callbacks = {
    timerCallback,
    monotonicTimerCallback,
@@ -103,7 +102,7 @@ bool initWebkit()
 #else
    HMODULE wdll = LoadLibraryA("EAWebkit.dll");
 #endif // _DEBUG
-   if(wdll != nullptr)
+   if (wdll != nullptr)
    {
       create_Webkit_instance = reinterpret_cast<PF_CreateEAWebkitInstance>(GetProcAddress(wdll, "CreateEAWebkitInstance"));
    }
@@ -112,7 +111,7 @@ bool initWebkit()
    WSADATA wsadata = {};
    WSAStartup(MAKEWORD(2, 0), &wsadata);
 
-   if(!create_Webkit_instance)
+   if (!create_Webkit_instance)
    {
       std::cout << "EAWebkit.dll missing" << std::endl;
       return false;
@@ -122,7 +121,7 @@ bool initWebkit()
 
    //check that dll is same version as our headers
    const char* verStr = wk->GetVersion();
-   if(strcmp(verStr, EAWEBKIT_VERSION_S) != 0)
+   if (strcmp(verStr, EAWEBKIT_VERSION_S) != 0)
    {
       std::cout << "Error!  Mismatched versions of EA Webkit" << std::endl;
       return false;
@@ -145,12 +144,15 @@ bool initWebkit()
    //times new roman is the default fallback if a font isn't found, so we need 
    //to at least load this (should probably be built in)
    int ret = add_ttf_font(wk, "times.ttf");
-   std::cout << "Adding default font returned: " << ret << std::endl;
+   if (ret == 0)
+   {
+      std::cout << "Error adding times.ttf font. " << std::endl;
+   }
 
    return true;
 }
 
-EA::WebKit::View* createView()
+EA::WebKit::View* createView(int x, int y)
 {
    EA::WebKit::View* v = 0;
 
@@ -158,8 +160,8 @@ EA::WebKit::View* createView()
    EA::WebKit::ViewParameters vp;
    vp.mHardwareRenderer = nullptr; // use default renderer
    vp.mDisplaySurface = nullptr; // use default surface
-   vp.mWidth = 1280;
-   vp.mHeight = 720;
+   vp.mWidth = x;
+   vp.mHeight = y;
    vp.mBackgroundColor = 0; //clear  0xffffffff; //white
    vp.mTileSize = 256;
    vp.mUseTiledBackingStore = false;
@@ -167,12 +169,14 @@ EA::WebKit::View* createView()
    v->InitView(vp);
    v->SetSize(EA::WebKit::IntSize(vp.mWidth, vp.mHeight));
 
-   std::string url = std::string("file:///") + getExePath() + "/UI/actionMenu.html";
-   v->SetURI(url.c_str());
-
-   //v->SetURI("http://google.com");
-
    return v;
+}
+
+bool shutdownWebKit()
+{
+   wk->Shutdown();
+
+   return true;
 }
 
 void updateWebkit()
@@ -184,9 +188,13 @@ void updateWebkit()
     
 }
 
+void setViewUrl(EA::WebKit::View* v, const char* url)
+{
+   v->SetURI(url);
+}
+
 void updateView(EA::WebKit::View* v)
 {
-    //v->ForceInvalidateFullView();
     v->Paint();
 }
 

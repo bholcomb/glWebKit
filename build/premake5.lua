@@ -21,18 +21,55 @@ solution ("WebkitTest")
 -- Projects
 
 project ("glWebkit")
-  kind "ConsoleApp"
+  kind "SharedLib"
   location("glWebKit")
+  language "C++"
+  debugdir("../bin64")
+  targetdir("../bin64")
+  links {
+    'OpenGL32.lib',
+    'ws2_32.lib',
+    'glew32.lib',
+    'bcrypt.lib'
+  }
+  
+  defines {
+	GL_WEBKIT_EXPORTS
+  }
+  
+  includedirs {
+    '../include',
+    '../libsrc/glWebKit'
+  }
+  
+  libdirs {
+   '../lib64'
+  }
+  
+  files {
+	"../include/glWebKit/**h",
+    "../libsrc/glWebKit/**.h",
+    "../libsrc/glWebKit/**.cxx",
+    "../libsrc/glWebKit/**.cpp"
+  }
+  
+  vpaths {
+     ["Public"] = {"../include/glWebKit/**.h"},
+	 ["Headers"] = {"../libsrc/glWebKit/**.h"},
+	 ["Sources"] = {"../libsrc/glWebKit/**.cxx", "../libsrc/glWebKit/**.cpp"},
+   }
+   
+project ("glWebkitExample")
+  kind "ConsoleApp"
+  location("glWebKitExample")
   language "C++"
   debugdir("../bin64")
   targetdir("../bin64")
   links {
     'SDL2.lib',
     'OpenGL32.lib',
-    'ws2_32.lib',
-    'Shlwapi.lib',
     'glew32.lib',
-    'bcrypt.lib'
+	'glWebkit'
   }
   
   defines {
@@ -48,12 +85,13 @@ project ("glWebkit")
   }
   
   files {
-    "../libsrc/**.h",
-    "../libsrc/**.cxx",
-    "../libsrc/**.cpp"
+    "../libsrc/example/**.h",
+    "../libsrc/example/**.cxx",
+    "../libsrc/example/**.cpp"
   }
   
   vpaths {
-     ["Headers"] = {"../libsrc/**.h"},
-	  ["Sources"] = {"../libsrc/**.cxx", "../libsrc/**.cpp"},
+     ["Headers"] = {"../libsrc/example/**.h"},
+	 ["Sources"] = {"../libsrc/example/**.cxx", "../libsrc/example/**.cpp"},
    }
+
