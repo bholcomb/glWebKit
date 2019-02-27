@@ -167,6 +167,7 @@ EA::WebKit::View* createView()
    v->InitView(vp);
    v->SetSize(EA::WebKit::IntSize(vp.mWidth, vp.mHeight));
 
+   //std::string url = std::string("file:///") + getExePath() + "/prototypes/calinou/index.html";
    std::string url = std::string("file:///") + getExePath() + "/UI/actionMenu.html";
    v->SetURI(url.c_str());
 
