@@ -1,6 +1,6 @@
-#include "glWebkitUtils.h"
-#include "glWebKit.h"
+#include "glWebKit/glWebKit.h"
 
+#include "glWebkitUtils.h"
 
 #include <GL/glew.h>
 
@@ -17,31 +17,10 @@
 #include <assert.h>
 #include <array>
 
-#include <Shlwapi.h>
 #include <vector>
 
 #include <iostream>
 #include <algorithm>
-
-unsigned int frame = 0;
-
-std::string getExePath()
-{
-    char path[MAX_PATH] = "";
-    DWORD length = GetModuleFileNameA(NULL, path, MAX_PATH);
-    PathRemoveFileSpecA(path);
-    return std::string(path);
-}
-
-std::string replaceAll(std::string str, const std::string& from, const std::string& to) 
-{
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-    }
-    return str;
-}
 
 int getSystemFonts(std::vector<std::string>& fonts) 
 {
@@ -156,8 +135,10 @@ int nextIndex = 0;
 
 void updateGLTexture(EA::WebKit::View* v, unsigned int id)
 {
-   if(!v)
+   if (!v)
+   {
       return;
+   }
 
    int w, h;
    EA::WebKit::ISurface* surface = v->GetDisplaySurface();
@@ -166,7 +147,6 @@ void updateGLTexture(EA::WebKit::View* v, unsigned int id)
 
    index = (index + 1) % 2;
    nextIndex = (index + 1) % 2;
-   double start, stop;
 
    //lazily create and map the PBOs
    if(vPbo[0] == 0)
@@ -186,22 +166,26 @@ void updateGLTexture(EA::WebKit::View* v, unsigned int id)
    surface->Lock(&sd);
 
    //copy the last frame's data to the texture.  This is a frame of lag, but should allow for fast transfers
-   start = timerCallback();
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, vPbo[index]);
    glTextureSubImage2D(id, 0, 0, 0, w, h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
-   stop = timerCallback();
-   //if(frame % 100 == 0) std::cout << "glTextureSubImage2D time: " << (stop - start) * 1000.0 << "ms" << std::endl;
-
+   
    //copy the current data to the next buffer
-   start = timerCallback();
    if(buffer)
    {
       //This image is actually flipped, but we're going to handle that in the shader instead of trying to actually flip
       //it on the CPU
       memcpy(buffer[nextIndex], sd.mData, w * h * 4);
    }
-   stop = timerCallback();
-   //if(frame % 100 == 0) std::cout << "Upload to PBO time: " << (stop - start) * 1000.0 << "ms" << std::endl;
-
+   
    surface->Unlock();   
+}
+
+bool evaluateJavaScript(EA::WebKit::View* v, const char* src, EA::WebKit::JavascriptValue* result)
+{
+   return v->EvaluateJavaScript(src, result);
+}
+
+void bindJavascriptObject(EA::WebKit::View* v, const char* name, EA::WebKit::IJSBoundObject* obj)
+{
+   v->BindJavaScriptObject(name, obj);
 }
